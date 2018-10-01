@@ -8,7 +8,7 @@
 #include <QPainter>
 #include <QPushButton>
 #include <iostream>
-
+#include <QString>
 
 Calculator::Calculator(QWidget *parent) :
     QMainWindow(parent, Qt::FramelessWindowHint),
@@ -99,20 +99,15 @@ void Calculator::on_QuitButton_clicked()
 
 }
 
-void Calculator::UpdatingDisplay(QString equation, QString current, QString result)
+void Calculator::UpdatingDisplay(QString oper, int equation)
 {
-    QString Operation("Operation");
-    QString Result("Result");
+    QString Operation(QString::number(equation));
     QString text("<font size=2>%1</font><br><font size=1>%2</font>");
-    ui->Display->setText(text.arg(Operation, Result));
+
+    int resultMath = DoMath(oper, equation);
+    ui->Display->setText(text.arg(Operation, QString::number(resultMath)));
 }
 
-
-//void Calculator::buttonClicked()
-//{
-//    QPushButton* button = qobject_cast<QPushButton*>(sender());
-//    emit digitClicked(button->text()[0].digitValue());
-//}
 
 void Calculator::buttonClicked(QString value)
 {
@@ -122,11 +117,16 @@ void Calculator::buttonClicked(QString value)
     qreal number = value.toInt(&isNumber);
 
     if (isNumber) {
-      qDebug() << number;
+      //qDebug() << number;
+        QString DText = ui->Display->text();
+        if (DText == "0.0"){DText = "";}
+        ui->Display->setText(DText + value);
+        Current = ui->Display->text().toInt();
 
-    } else {
+    }
+    else {
       qDebug() << value;
-
+      UpdatingDisplay(value, Current);
     }
 }
 
@@ -140,4 +140,41 @@ void Calculator::operatorClicked(QString value){
     //qDebug() << "Click Emit";
     //qDebug() << value;
     ui->Display->setText(QString(value));
+}
+
+int Calculator::DoMath(QString oper, int oper_1){
+
+    int math;
+    int firstArg = oper_1;
+    int secondArg = Current;
+
+    if (QString::compare(oper, "+", Qt::CaseInsensitive) == 0){
+        math = firstArg + secondArg;
+        return math;
+    }
+    else if (QString::compare(oper, "-", Qt::CaseInsensitive)== 0){
+        math = firstArg - secondArg;
+        return math;
+    }
+    else if (QString::compare(oper, "X", Qt::CaseInsensitive)== 0){
+        math = firstArg * secondArg;
+        return math;
+    }
+    else if (QString::compare(oper, "/", Qt::CaseInsensitive)== 0){
+        math = firstArg / secondArg;
+        return math;
+    }
+    else if (QString::compare(oper, "+/-", Qt::CaseInsensitive)== 0){
+        math = firstArg * -1;
+        return math;
+    }
+    else if (QString::compare(oper, "=", Qt::CaseInsensitive)== 0){
+        math = firstArg;
+        return math;
+    }
+    else{
+        math = firstArg;
+        return math;
+    }
+
 }

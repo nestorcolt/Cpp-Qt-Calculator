@@ -9,7 +9,7 @@
 #include <QResizeEvent>
 #include <QPainter>
 #include <QPushButton>
-
+#include <QString>
 
 namespace Ui {
 class Calculator;
@@ -28,6 +28,7 @@ public:
     explicit Calculator(QWidget *parent = nullptr);
     ~Calculator();
     GlobalCoors Axis;
+    int DoMath(QString oper, int oper_1);
 
 
 private:
@@ -36,6 +37,12 @@ private:
     bool IsMouseDown = false;
     QPoint LastMousePosition;
     QPoint MousePos;
+    QString LastOperator;
+
+    float LastEquation;
+    int Current;
+
+
 
 protected:
     void mousePressEvent(QMouseEvent* event);
@@ -44,13 +51,13 @@ protected:
     void resizeEvent(QResizeEvent * event);
 
 
+
 private slots:
     void on_QuitButton_clicked();
-    //void buttonClicked();
     void buttonClicked(QString value);
     void digitClicked(int);
     void operatorClicked(QString);
-    void UpdatingDisplay(QString equation, QString current, QString result);
+    void UpdatingDisplay(QString oper, int equation);
 
 
 };
