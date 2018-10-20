@@ -28,21 +28,23 @@ public:
     explicit Calculator(QWidget *parent = nullptr);
     ~Calculator();
     GlobalCoors Axis;
-    int DoMath(QString oper, int oper_1);
-
 
 private:
     Ui::Calculator *ui;
 
+    bool switchAfterOperatorPress = false;
     bool IsMouseDown = false;
+    bool ZeroFirst = false;
+
     QPoint LastMousePosition;
     QPoint MousePos;
+
     QString LastOperator;
-
-    float LastEquation;
-    int Current;
-
-
+    QString LastOperation;
+    QString CurrentOperation;
+    QString LastResult;
+    QString StoredResult;
+    QString CurrentOperator;
 
 protected:
     void mousePressEvent(QMouseEvent* event);
@@ -54,12 +56,12 @@ protected:
 
 private slots:
     void on_QuitButton_clicked();
+    void on_ClearButton_clicked();
     void buttonClicked(QString value);
-    void digitClicked(int);
-    void operatorClicked(QString);
-    void UpdatingDisplay(QString oper, int equation);
-
-
+    void on_EqualButton_clicked();
+    QString DoMath();
+    void on_ChangeSignButton_clicked();
+    void on_DelButton_clicked();
 };
 
 #endif // CALCULATOR_H

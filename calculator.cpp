@@ -18,16 +18,26 @@ Calculator::Calculator(QWidget *parent) :
     ui->setupUi(this);
     setObjectName("Colt Calculator Borderless");
 
+    connect(ui->EqualButton, SIGNAL(clicked()), this, SLOT(on_EqualButton_clicked));
 
     // Getting all buttons && connecting them to the slot mapping
     QList<QPushButton *> buttons = this->findChildren<QPushButton *>();
-    qDebug() << buttons.size();
+    //qDebug() << buttons.size();
+    connect(ui->MemClearButton, SIGNAL(clicked()), this, SLOT(on_ClearButton_clicked())); /// Old Signal style but usefull    
+    connect(ui->ChangeSignButton, SIGNAL(clicked()), this, SLOT(on_ChangeSignButton_clicked));
+    connect(ui->DelButton, SIGNAL(clicked()), this, SLOT(on_DelButton_clicked));
 
     for (const auto *button: buttons)
     {
-        qDebug() << " - " << button->objectName();
+        if (button->objectName() == "EqualButton" || button->objectName() == "MemStoreButton"
+                || button->objectName() == "MemClearButton" || button->objectName() == "DelButton"){
+            continue;
+        }
+
+        //qDebug() << " - " << button->objectName();
         ///Connect
         //connect(but, SIGNAL(clicked()), this, SLOT(buttonClicked())); /// Old Signal style but usefull
+
         // new lambda expression
         QString digit = button->text();
         connect(button, &QPushButton::clicked,
@@ -74,11 +84,9 @@ void Calculator::mousePressEvent(QMouseEvent *event)
 
 void Calculator::mouseReleaseEvent(QMouseEvent *event)
 {
-
     if(event->button() == Qt::LeftButton) {
         IsMouseDown = false;
     }
-
 }
 
 void Calculator::mouseMoveEvent(QMouseEvent *event)
@@ -94,18 +102,7 @@ void Calculator::mouseMoveEvent(QMouseEvent *event)
 
 void Calculator::on_QuitButton_clicked()
 {
-    qDebug() << "Closing Calculator";
     close();
-
-}
-
-void Calculator::UpdatingDisplay(QString oper, int equation)
-{
-    QString Operation(QString::number(equation));
-    QString text("<font size=2>%1</font><br><font size=1>%2</font>");
-
-    int resultMath = DoMath(oper, equation);
-    ui->Display->setText(text.arg(Operation, QString::number(resultMath)));
 }
 
 
@@ -115,66 +112,109 @@ void Calculator::buttonClicked(QString value)
     bool isNumber = false;
     // can be int, float or double or word like "top"
     qreal number = value.toInt(&isNumber);
+    QString DText = ui->Display->text();
+    QString DTextCopy = DText;
 
     if (isNumber) {
-      //qDebug() << number;
-        QString DText = ui->Display->text();
-        if (DText == "0.0"){DText = "";}
-        ui->Display->setText(DText + value);
-        Current = ui->Display->text().toInt();
+
+        if (DText == "0" || switchAfterOperatorPress == true)
+            {
+            DText = "";
+            }
+
+        else if (LastResult.size() > 0){
+            StoredResult = LastResult;
+            LastResult = "";
+            DText = "";
+        }
+
+        if (switchAfterOperatorPress == false && DTextCopy != "0"){
+            ui->Display->setText(DTextCopy + QString::number(int(number)));
+            CurrentOperation = ui->Display->text();
+        }
+        else{
+            ui->Display->setText(DText + QString::number(int(number)));
+            CurrentOperation = ui->Display->text();
+        }
+
+        ///
+        switchAfterOperatorPress = false;
 
     }
     else {
-      qDebug() << value;
-      UpdatingDisplay(value, Current);
+
+        qDebug() << ui->Display->text();
+        LastOperation = CurrentOperation;
+
+        if (StoredResult.size() > 0){
+          LastOperation = StoredResult;
+        }
+
+      CurrentOperator = value;
+      switchAfterOperatorPress = true;
     }
 }
 
-void Calculator::digitClicked(int value){
-    //qDebug() << "Click Emit";
-    //qDebug() << value;
-    ui->Display->setText(QString::number((value)));
+
+void Calculator::on_EqualButton_clicked()
+{
+    if (LastOperation.length() > 0 && CurrentOperation.length() > 0){
+        LastResult = DoMath();
+        ui->Display->setText(LastResult);
+        StoredResult = LastResult;
+    }
 }
 
-void Calculator::operatorClicked(QString value){
-    //qDebug() << "Click Emit";
-    //qDebug() << value;
-    ui->Display->setText(QString(value));
+
+void Calculator::on_ClearButton_clicked()
+{
+    LastOperation = "";
+    StoredResult = "";
+    LastResult = "";
+    CurrentOperation = "";
+    LastOperator = "";
+    LastOperation = "";
+    ui->Display->setText("0");
+    switchAfterOperatorPress = false;
 }
 
-int Calculator::DoMath(QString oper, int oper_1){
-
-    int math;
-    int firstArg = oper_1;
-    int secondArg = Current;
-
-    if (QString::compare(oper, "+", Qt::CaseInsensitive) == 0){
-        math = firstArg + secondArg;
-        return math;
+QString Calculator::DoMath(){
+    if (CurrentOperator == "+"){
+        return QString::number(LastOperation.toInt() + CurrentOperation.toInt());
     }
-    else if (QString::compare(oper, "-", Qt::CaseInsensitive)== 0){
-        math = firstArg - secondArg;
-        return math;
+    else if (CurrentOperator == "-"){
+        return QString::number(LastOperation.toInt() - CurrentOperation.toInt());
     }
-    else if (QString::compare(oper, "X", Qt::CaseInsensitive)== 0){
-        math = firstArg * secondArg;
-        return math;
+    else if (CurrentOperator == "X"){
+        return QString::number(LastOperation.toInt() * CurrentOperation.toInt());
     }
-    else if (QString::compare(oper, "/", Qt::CaseInsensitive)== 0){
-        math = firstArg / secondArg;
-        return math;
-    }
-    else if (QString::compare(oper, "+/-", Qt::CaseInsensitive)== 0){
-        math = firstArg * -1;
-        return math;
-    }
-    else if (QString::compare(oper, "=", Qt::CaseInsensitive)== 0){
-        math = firstArg;
-        return math;
+    else if (CurrentOperator == "/"){
+        return QString::number(LastOperation.toInt() / CurrentOperation.toInt());
     }
     else{
-        math = firstArg;
-        return math;
+        return "No Math operator";
+    }
+}
+
+
+void Calculator::on_ChangeSignButton_clicked()
+{
+    QString MinusOneString = QString::number(ui->Display->text().toInt() * -1);
+    ui->Display->setText(MinusOneString);
+    StoredResult = MinusOneString;
+}
+
+void Calculator::on_DelButton_clicked()
+{
+    QString text = ui->Display->text();
+    if (text == "0"){return;}
+
+    //
+    if (text.length() <= 1){
+       ui->Display->setText("0");
+       return;
     }
 
+    text.resize(text.length() - 1);
+    ui->Display->setText(text);
 }
